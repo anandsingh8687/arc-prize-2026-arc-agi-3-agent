@@ -5,6 +5,11 @@ but cannot sustain the action rate is not an improvement. The budget is
 0.577 actions/sec aggregate -- 110 games, 9 hours, depth 3.
 
     python -m arc3.evaluate --agent random --games ls20,ft09 --max-actions 200
+    python -m arc3.evaluate --agent random --games ls20,ft09 --portfolio-seconds 600 --trace /tmp/cov.jsonl
+
+Env (optional; CLI wins when set):
+    ARC3_TRACE                 per-game JSONL path
+    ARC3_PORTFOLIO_SECONDS     enable portfolio scheduler with this wall budget
 """
 
 from __future__ import annotations
@@ -17,6 +22,8 @@ from arcengine import GameAction, GameState
 from .agents.base import Agent, Observation
 from .env import HIDDEN_GAMES, RUNTIME_SECONDS, baselines_by_game, grid_of, make_arcade
 from .instrumentation import GameTrace, TraceRecorder
+from .portfolio_loop import PlayOutcome, run_portfolio
+from .qwen_portfolio import resolve_portfolio_seconds, resolve_trace_path
 from .scoring import GameResult, RunResult, levels_from_action_log
 
 # Aggregate action rate needed for depth 3 across the hidden set.
@@ -29,21 +36,35 @@ def play_game(
     agent: Agent,
     baselines: list[int],
     max_actions: int = 400,
-) -> GameResult:
-    """Play one game, charging actions exactly as the scorecard does."""
+    max_seconds: float | None = None,
+) -> tuple[GameResult, str]:
+    """Play one game, charging actions exactly as the scorecard does.
+
+    Returns ``(result, abandon_reason)``. ``abandon_reason`` is
+    ``time_budget_exhausted`` when ``max_seconds`` elapses mid-game; otherwise
+    empty (portfolio soft-abandon is decided by the outer scheduler).
+    """
     env = arcade.make(game_id)
     agent.reset(game_id)
 
     started = time.monotonic()
     actions = 0  # monotonic, mirrors scorecard.actions
     completions: list[int] = []  # cumulative action count at each level completion
+    abandon_reason = ""
 
     frame = env.reset()
     actions += 1  # a RESET is charged
     levels_seen = frame.levels_completed
     last_grid = grid_of(frame)
 
+    def _time_up() -> bool:
+        return max_seconds is not None and (time.monotonic() - started) >= max_seconds
+
     while actions < max_actions:
+        if _time_up():
+            abandon_reason = "time_budget_exhausted"
+            break
+
         obs = Observation.from_frame(frame, actions, last_grid)
         last_grid = obs.grid
         if agent.is_done(obs) or frame.state == GameState.WIN:
@@ -59,7 +80,9 @@ def play_game(
             break
 
         for planned in plan.actions:
-            if actions >= max_actions:
+            if actions >= max_actions or _time_up():
+                if _time_up():
+                    abandon_reason = "time_budget_exhausted"
                 break
             if planned.action not in [
                 GameAction.from_id(a) for a in frame.available_actions
@@ -95,12 +118,13 @@ def play_game(
         if frame.state == GameState.WIN:
             break
 
-    return GameResult(
+    result = GameResult(
         game_id=game_id,
         total_levels=len(baselines),
         levels=levels_from_action_log(baselines, completions, actions),
         wall_seconds=time.monotonic() - started,
     )
+    return result, abandon_reason
 
 
 def _record_game_trace(
@@ -128,25 +152,100 @@ def evaluate(
     max_actions: int = 400,
     scored_environments: int | None = None,
     trace_path: str | None = None,
+    portfolio_seconds: float | None = None,
+    min_seconds_per_game: float = 90.0,
+    reserve_fraction: float = 0.08,
+    bonus_seconds_on_level: float = 120.0,
 ) -> RunResult:
     arcade = make_arcade()
     baselines = baselines_by_game(arcade)
     targets = games or sorted(baselines)
+    scored = scored_environments or len(targets)
+    run = RunResult(scored_environments=scored)
+    trace_path = resolve_trace_path(trace_path)
+    portfolio_seconds = resolve_portfolio_seconds(portfolio_seconds)
 
-    run = RunResult(scored_environments=scored_environments or len(targets))
+    if portfolio_seconds is not None and portfolio_seconds > 0:
+        playable = [g for g in targets if g in baselines]
+        for game_id in targets:
+            if game_id not in baselines:
+                print(f"  skip {game_id}: no baseline data")
+
+        def play_fn(game_id: str, max_seconds: float) -> PlayOutcome:
+            result, abandon = play_game(
+                arcade,
+                game_id,
+                agent,
+                baselines[game_id],
+                max_actions=max_actions,
+                max_seconds=max_seconds,
+            )
+            # Upsert: portfolio may revisit an exploit game with leftover budget.
+            replaced = False
+            for i, existing in enumerate(run.games):
+                if existing.game_id == game_id:
+                    run.games[i] = result
+                    replaced = True
+                    break
+            if not replaced:
+                run.games.append(result)
+            rate = result.actions / result.wall_seconds if result.wall_seconds else 0.0
+            extra = f"  abandon={abandon}" if abandon else ""
+            print(
+                f"  {game_id:<6} score {result.score:>6.2f} / ceiling {result.ceiling:>6.2f}"
+                f"  depth {result.levels_completed}/{result.total_levels}"
+                f"  actions {result.actions:>4}  {rate:>7.1f} act/s{extra}"
+            )
+            completed = [lv.index for lv in result.levels if lv.completed]
+            return PlayOutcome(
+                game_id=game_id,
+                wall_seconds=result.wall_seconds,
+                actions=result.actions,
+                levels_completed=result.levels_completed,
+                level_indices_completed=completed,
+                abandon_reason=abandon,
+                score=result.score,
+            )
+
+        portfolio_result = run_portfolio(
+            playable,
+            play_fn,
+            total_seconds=portfolio_seconds,
+            scored_environments=scored,
+            reserve_fraction=reserve_fraction,
+            min_seconds_per_game=min_seconds_per_game,
+            bonus_seconds_on_level=bonus_seconds_on_level,
+            trace_path=trace_path,
+        )
+        if portfolio_result.recorder is not None:
+            summary = portfolio_result.recorder.coverage_summary(scored)
+            print(
+                f"  trace coverage: touched {summary['games_touched']}"
+                f" / scored {summary['scored_environments']}"
+                f"  levels {summary['total_levels_completed']}"
+            )
+            print(
+                f"  portfolio: games_in_plan={len(portfolio_result.plan.games)}"
+                f" reserve_left={portfolio_result.plan.reserve_seconds:.1f}s"
+            )
+        return run
+
     recorder = TraceRecorder(trace_path) if trace_path else None
     for game_id in targets:
         if game_id not in baselines:
             print(f"  skip {game_id}: no baseline data")
             continue
-        result = play_game(arcade, game_id, agent, baselines[game_id], max_actions)
-        _record_game_trace(recorder, result)
+        result, abandon = play_game(
+            arcade, game_id, agent, baselines[game_id], max_actions
+        )
+        _record_game_trace(recorder, result, abandon)
         run.games.append(result)
         rate = result.actions / result.wall_seconds if result.wall_seconds else 0.0
+        extra = f"  abandon={abandon}" if abandon else ""
         print(
             f"  {game_id:<6} score {result.score:>6.2f} / ceiling {result.ceiling:>6.2f}"
             f"  depth {result.levels_completed}/{result.total_levels}"
-            f"  actions {result.actions:>4}  {rate:>7.1f} act/s"
+            f"  actions {result.actions:>4}  {rate:>7.1f} act/s{extra}"
         )
     if recorder is not None:
         summary = recorder.write_summary(run.scored_environments)
@@ -202,7 +301,31 @@ def main() -> None:
     parser.add_argument(
         "--trace",
         default="",
-        help="write per-game coverage JSONL to this path",
+        help="write per-game coverage JSONL (or set ARC3_TRACE)",
+    )
+    parser.add_argument(
+        "--portfolio-seconds",
+        type=float,
+        default=None,
+        help="enable portfolio time-box / abandon / reallocate (or ARC3_PORTFOLIO_SECONDS)",
+    )
+    parser.add_argument(
+        "--min-seconds-per-game",
+        type=float,
+        default=90.0,
+        help="portfolio: drop games rather than slice below this",
+    )
+    parser.add_argument(
+        "--reserve-fraction",
+        type=float,
+        default=0.08,
+        help="portfolio: fraction held for exploit revisits",
+    )
+    parser.add_argument(
+        "--bonus-seconds-on-level",
+        type=float,
+        default=120.0,
+        help="portfolio: reserve seconds moved onto a game per newly cleared level",
     )
     args = parser.parse_args()
 
@@ -215,6 +338,10 @@ def main() -> None:
         args.max_actions,
         args.scored_environments,
         trace_path=args.trace or None,
+        portfolio_seconds=args.portfolio_seconds,
+        min_seconds_per_game=args.min_seconds_per_game,
+        reserve_fraction=args.reserve_fraction,
+        bonus_seconds_on_level=args.bonus_seconds_on_level,
     )
     report(run)
 
