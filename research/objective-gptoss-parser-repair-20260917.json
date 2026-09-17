@@ -1,0 +1,22 @@
+{
+  "project_id": "arc-prize-2026-arc-agi-3",
+  "objective_id": "20260917-gptoss-parser-repair",
+  "business_objective": "Resolve the observed GPT-OSS native-tool parser failure without another blind GPU retry.",
+  "current_gate": "BUILD",
+  "risk_class": "high",
+  "definition_of_done": "Reproduce the parser error on CPU, establish the supported request contract from exact source where available, implement a bounded fix with regression tests, and record remaining uncertainty. A separately recorded launch decision may authorize one 1200-second private lifecycle validation only after local proof and review.",
+  "acceptance_criteria": [
+    "CPU reproduction emits the exact observed Harmony parser error and distinguishes synthetic reproduction from the unavailable actual output stream.",
+    "Requests and readiness checks use the same supported GPT-OSS tool mode, preserve reasoning and remain fail-closed on invalid tool output.",
+    "Regression tests exercise the incompatible path and repaired path; generated notebook parses and fits Kaggle upload limits.",
+    "Any GPU validation has a new evidence-based launch decision, at most one 1200-second run, no scored submission, and durable failure artifacts."
+  ],
+  "non_goals": ["Claiming ARC capability or score gain", "Long benchmark or submission", "Model-weight changes", "Reading game source", "Suppressing arbitrary parser errors or executing unvalidated model text"],
+  "authorized_scope": ["arc3/duck_gptoss_adapter.py", "research/", "tests/", "notebooks/gptoss-smoke/", "private Kaggle development inputs and one conditionally validated lifecycle run"],
+  "known_future_gates": ["MERGE", "ACTIVATE", "PUBLISH"],
+  "approval_boundaries": ["No paid compute", "No credential or permission changes", "No GPU before CPU evidence and review", "No scored submission or long run"],
+  "source_revision": "680bca2",
+  "execution_mode": "DEEP",
+  "work_packages": ["P1-source-and-CPU-reproduction", "P2-scoped-request-repair", "P3-tests-review", "P4-conditional-lifecycle-validation"],
+  "created_at": "2026-09-17"
+}

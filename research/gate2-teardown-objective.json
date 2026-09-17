@@ -1,0 +1,43 @@
+{
+  "objective_id": "gate2-teardown-recovery",
+  "project_id": "arc-prize-2026",
+  "business_objective": "Remove the false teardown blocker so the Gate 2 response-cap comparison can run without risking a long GPU measurement.",
+  "current_gate": "BUILD",
+  "risk_class": "high",
+  "definition_of_done": "The teardown logic preserves the first attempt's live metrics and artifact evidence, independently verifies that owned CPU and GPU processes are gone after drain, the generated notebooks pass deterministic validation, and one production-path Kaggle smoke ends with GATE2_COMPARISON_SMOKE_OK, logical_exit_code 0, and no owned GPU process.",
+  "acceptance_criteria": [
+    "A drained owned GPU process can be reconciled without requiring a second successful metrics capture from a closed endpoint.",
+    "Missing metrics, process conflicts, CPU survivors, GPU query errors, and exact owned GPU survivors still fail closed.",
+    "The generated smoke and full notebooks parse and pass research/validate_notebook.py.",
+    "The Kaggle smoke completes both 60-second arms, persists its output, passes teardown, and reports logical_exit_code 0.",
+    "The final nvidia-smi process table contains no owned vLLM process."
+  ],
+  "non_goals": [
+    "Running the multi-hour eight-game comparison before the smoke passes",
+    "Submitting anything to the ARC-AGI-3 competition",
+    "Changing the model, prompt, token-cap treatment, game set, seeds, or serving profile"
+  ],
+  "authorized_scope": [
+    "Inspect the saved private Kaggle Version 5 smoke outputs",
+    "Modify the Gate 2 notebook builder, tests, generated notebooks, and run-discipline documentation",
+    "Upload and run one short private Kaggle lifecycle smoke on the already configured RTX PRO 6000 notebook"
+  ],
+  "known_future_gates": [
+    "OPERATE",
+    "PUBLISH"
+  ],
+  "approval_boundaries": [
+    "Do not start the long comparison unless the short smoke passes every lifecycle criterion.",
+    "Do not submit to the competition.",
+    "Do not make the notebook public.",
+    "Do not change experiment policy while repairing lifecycle code."
+  ],
+  "source_revision": "52c2edad69f39898bd483f5825148ca58c8198f1",
+  "execution_mode": "DEEP",
+  "work_packages": [
+    "WP1-reconcile-teardown-evidence",
+    "WP2-deterministic-validation",
+    "WP3-kaggle-smoke"
+  ],
+  "created_at": "2026-09-16T00:55:32+05:30"
+}

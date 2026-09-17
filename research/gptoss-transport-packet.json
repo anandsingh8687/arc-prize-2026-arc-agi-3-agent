@@ -1,0 +1,35 @@
+{
+  "acceptance_criteria": [
+    "Native tool roundtrip, no images, no Qwen parameter leakage, history preserved"
+  ],
+  "allowed_files": [],
+  "approval_gate": null,
+  "assigned_model": "gpt-5.6-terra",
+  "assigned_role": "implementer",
+  "business_context": null,
+  "context_budget_chars": 12000,
+  "created_at": "2026-09-17T16:50:16+00:00",
+  "critical_invariants": [
+    "No GPU, game source or notebook edits"
+  ],
+  "dependencies": [],
+  "escalation_conditions": [],
+  "expected_evidence": [],
+  "non_goals": [],
+  "objective": "Native GPT-OSS transport and CPU tests for Duck plus complete scene",
+  "parent_task_id": null,
+  "read_scope": [
+    "arc3",
+    "../duck-harness-source/ARC3-Inference"
+  ],
+  "reasoning_effort": "medium",
+  "repair_attempt": 0,
+  "required_tests": [],
+  "risk_class": "high",
+  "source_revision": "0a9dde8",
+  "task_id": "gptoss-transport",
+  "write_scope": [
+    "arc3/duck_gptoss_adapter.py",
+    "tests/test_duck_gptoss_adapter.py"
+  ]
+}

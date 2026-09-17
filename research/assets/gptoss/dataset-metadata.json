@@ -1,0 +1,6 @@
+{
+  "title": "ARC3 Harmony Vocab 20260917",
+  "id": "anandsingh8687/arc3-harmony-vocab-20260917",
+  "licenses": [{"name": "other"}],
+  "description": "Private offline dependency for ARC-AGI-3 development. Unmodified official OpenAI o200k_base.tiktoken vocabulary, gzip compressed. Source https://openaipublic.blob.core.windows.net/encodings/o200k_base.tiktoken; loader https://github.com/openai/harmony/blob/main/src/tiktoken_ext/public_encodings.rs. Uncompressed SHA256 446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d. No game data or model weights. See upstream terms; no new license asserted. Created private through CLI public=False."
+}

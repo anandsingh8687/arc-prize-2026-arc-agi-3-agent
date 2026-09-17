@@ -1,0 +1,20 @@
+{
+  "task_id": "gptoss-parser-trace",
+  "objective": "Read-only exact vLLM/Harmony source trace for Version 2 parser failure; identify supported tool_choice and whether required causes the observed error.",
+  "source_revision": "680bca2",
+  "risk_class": "high",
+  "assigned_role": "reviewer",
+  "assigned_model": "gpt-5.6-terra",
+  "reasoning_effort": "high",
+  "read_scope": ["research/gptoss_runtime.py", "arc3/duck_gptoss_adapter.py", "/tmp/arc3-gptoss-smoke-v2.DjbNBYEV", "official vLLM source"],
+  "write_scope": [],
+  "allowed_files": [],
+  "non_goals": ["Code changes", "GPU launch", "Game-source access", "Credential inspection"],
+  "critical_invariants": ["Do not claim precise cause without exact output tokens; no secrets in output"],
+  "required_tests": [],
+  "acceptance_criteria": ["Cite exact code paths, source revision and residual uncertainties"],
+  "dependencies": [],
+  "approval_gate": null,
+  "escalation_conditions": [],
+  "expected_evidence": ["Primary-source lines and bounded repair recommendation"]
+}

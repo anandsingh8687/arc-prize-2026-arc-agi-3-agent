@@ -1,0 +1,23 @@
+{
+  "project_id": "arc-prize-2026-arc-agi-3",
+  "objective_id": "20260917-gptoss-feasibility",
+  "business_objective": "Test a genuinely different offline model after Qwen-only small interventions failed to establish more cleared levels.",
+  "current_gate": "BUILD",
+  "risk_class": "high",
+  "definition_of_done": "Package gpt-oss-120b with model-native function calling and complete scene observations, prove CPU contracts, and run one bounded exact-code lifecycle smoke. Record rejection or readiness for a separately preregistered model-selection screen; do not claim a score gain from a smoke.",
+  "acceptance_criteria": [
+    "Native tool messages and model-specific request parameters are tested without Qwen XML/template leakage.",
+    "Every model turn receives the complete current scene and no image payload.",
+    "Pinned offline inputs, bounded startup, model identity, request provenance and CUDA library paths are recorded.",
+    "Smoke performs real game actions for a window measured from server readiness, persists results, exits cleanly and leaves no owned GPU worker.",
+    "At most one failed smoke plus one bounded repair, with no scored submission or full-game benchmark in this gate."
+  ],
+  "non_goals": ["Guaranteed score or rank", "Rescuing rejected Qwen arms by changing their gates", "Full 25-game run", "Scored submission", "Reading game source or hard-coding solutions"],
+  "authorized_scope": ["arc3/", "research/", "tests/", "private Kaggle development notebooks", "official model documentation and public competitor code"],
+  "known_future_gates": ["MERGE", "ACTIVATE", "PUBLISH", "OPERATE"],
+  "approval_boundaries": ["No paid GPU purchase", "No credential change", "No long run before exact-code smoke", "No scored submission before the user's score gate"],
+  "source_revision": "0a9dde8",
+  "execution_mode": "DEEP",
+  "work_packages": ["WP1-evidence-audit", "WP2-native-transport", "WP3-offline-launch-and-notebook", "WP4-CPU-validation-and-smoke"],
+  "created_at": "2026-09-17"
+}

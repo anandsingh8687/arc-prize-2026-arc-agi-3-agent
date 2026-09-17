@@ -1,0 +1,36 @@
+{
+  "acceptance_criteria": [
+    "Exact outcomes with provenance and one bounded recommendation"
+  ],
+  "allowed_files": [],
+  "approval_gate": null,
+  "assigned_model": "gpt-5.6-luna",
+  "assigned_role": "explorer",
+  "business_context": null,
+  "context_budget_chars": 12000,
+  "created_at": "2026-09-17T13:45:05+00:00",
+  "critical_invariants": [
+    "Only observed public game traces and versioned source"
+  ],
+  "dependencies": [],
+  "escalation_conditions": [],
+  "expected_evidence": [
+    "Source paths, revisions and read-only command results"
+  ],
+  "non_goals": [
+    "No writes, GPU, environment_files or extrapolated scores"
+  ],
+  "objective": "Read-only audit of completed experiments and harness before selecting one bounded candidate",
+  "parent_task_id": null,
+  "read_scope": [
+    "research/",
+    "../run-artifacts"
+  ],
+  "reasoning_effort": "medium",
+  "repair_attempt": 0,
+  "required_tests": [],
+  "risk_class": "medium",
+  "source_revision": "0158256",
+  "task_id": "score10-audit",
+  "write_scope": []
+}

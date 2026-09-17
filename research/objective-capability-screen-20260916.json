@@ -1,0 +1,44 @@
+{
+  "project_id": "arc-prize-2026-arc-agi-3",
+  "objective_id": "20260916-offline-capability-screen",
+  "business_objective": "Find and validate an offline ARC-AGI-3 agent change that clears materially more public levels, aiming for a public 25-game score above 10 before any new scored long run.",
+  "current_gate": "BUILD",
+  "risk_class": "high",
+  "definition_of_done": "An exact-code short smoke and a matched three-game W/W-repeat/treatment screen finish with clean Kaggle lifecycle; the treatment clears additional levels against both controls on at least two games with no regression on the third and no more than 15 percent extra GPU time, or the hypothesis is explicitly rejected with preserved traces. No competition submission is made in this gate.",
+  "acceptance_criteria": [
+    "The candidate uses only offline Kaggle-attached assets and no competition environment source files or hidden labels.",
+    "A new treatment arm and evidence packet are tested locally before GPU use.",
+    "The exact production serving and notebook code passes a complete one-game smoke before any run longer than ten minutes.",
+    "Matched control, same-seed repeat, and candidate outcomes report levels, weighted RHAE, tokens, actions, GPU seconds, and per-game traces.",
+    "Candidate promotion is based on additional completed levels over both controls, not fewer tokens alone."
+  ],
+  "non_goals": [
+    "Claiming a guaranteed public score above 10 or hidden rank one without a measured run.",
+    "Training on or reading public environment_files game implementation.",
+    "Spending a scored Kaggle submission or a nine-hour run in this gate.",
+    "A general executable simulator for every game."
+  ],
+  "authorized_scope": [
+    "arc3/",
+    "research/",
+    "tests/",
+    "notebooks/ private development notebook generation and runs",
+    "Read-only primary-source web and competitor-code research"
+  ],
+  "known_future_gates": ["ACTIVATE", "PUBLISH", "OPERATE"],
+  "approval_boundaries": [
+    "No scored submission until a full public run exceeds 10, as instructed by the operator.",
+    "No run longer than ten minutes without an exact-code passing lifecycle smoke.",
+    "No public posting, credential changes, or destructive cleanup.",
+    "One bounded repair wave after a failed screen before changing hypothesis."
+  ],
+  "workflow_limits": {
+    "normal_repair_waves": 1,
+    "critical_repair_waves": 2,
+    "third_broad_review": "Prohibited without a reproduced current-gate P0/P1."
+  },
+  "source_revision": "55ea194",
+  "execution_mode": "DEEP",
+  "work_packages": ["WP1-primary-source-and-trace-hypothesis", "WP2-offline-supervisor-or-best-alternative", "WP3-exact-code-smoke", "WP4-three-game-paired-screen"],
+  "created_at": "2026-09-16T00:00:00+05:30"
+}

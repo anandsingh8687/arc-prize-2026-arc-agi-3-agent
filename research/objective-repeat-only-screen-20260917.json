@@ -1,0 +1,33 @@
+{
+  "project_id": "arc-prize-2026-arc-agi-3",
+  "objective_id": "20260917-repeat-only-recovery-screen",
+  "business_objective": "Test whether evidence-triggered recovery clears more levels without the regression seen under a fixed timer, as one bounded step toward a public 25-game score above 10.",
+  "current_gate": "BUILD",
+  "risk_class": "high",
+  "definition_of_done": "The exact-code private smoke finishes cleanly, then a matched W/S/W-repeat three-game screen reports completed levels and resource use. S passes the pre-registered per-game gate or is explicitly rejected with traces preserved; no scored submission occurs.",
+  "acceptance_criteria": [
+    "The replay script reports the first action-based trigger at each recorded analysis boundary without reading game implementation files.",
+    "The prior timer notebook remains an immutable historical artifact and the new notebook embeds the reviewed repeat-only adapter.",
+    "The private one-game smoke executes a valid recovery probe, persists its outcome, and tears down cleanly before the longer screen starts.",
+    "The three-game screen reports levels, weighted RHAE, actions, calls, generated tokens, GPU seconds, and trigger reasons for W, S, and W-repeat.",
+    "S promotes only if it clears additional levels over both controls in two games, regresses in none, and uses no more than 15 percent additional GPU time."
+  ],
+  "non_goals": [
+    "Claiming public score above 10 or hidden leaderboard progress from a three-game screen.",
+    "Reading environment_files game implementations or hidden labels.",
+    "Submitting to the competition or running a nine-hour benchmark."
+  ],
+  "authorized_scope": ["arc3/", "research/", "tests/", "private Kaggle notebooks", "saved notebook output analysis"],
+  "known_future_gates": ["BUILD", "ACTIVATE", "PUBLISH"],
+  "approval_boundaries": [
+    "No scored submission or nine-hour run before a full public-25 score exceeds 10 and the user is informed.",
+    "No run over ten minutes before an exact-code lifecycle smoke passes.",
+    "No public posting, credential changes, or destructive cleanup.",
+    "At most one bounded implementation repair before changing the hypothesis."
+  ],
+  "workflow_limits": {"normal_repair_waves": 1, "critical_repair_waves": 2, "third_broad_review": "Prohibited without a current-gate P0/P1."},
+  "source_revision": "5146a2b",
+  "execution_mode": "DEEP",
+  "work_packages": ["WP1-offline-trigger-replay", "WP2-repeat-only-adapter-and-notebooks", "WP3-exact-code-smoke", "WP4-three-game-paired-screen"],
+  "created_at": "2026-09-17T01:35:00+05:30"
+}

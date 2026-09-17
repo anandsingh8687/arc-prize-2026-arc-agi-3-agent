@@ -1,0 +1,24 @@
+{
+  "project_id": "arc-prize-2026-arc-agi-3",
+  "objective_id": "20260917-score10-candidate",
+  "business_objective": "Find a measured path to more than 10 on the full 25-game public benchmark before a new long scored run.",
+  "current_gate": "BUILD",
+  "risk_class": "high",
+  "definition_of_done": "Reconcile existing experimental evidence, build one bounded capability candidate with complete observations, verify it locally, then obtain a valid short smoke and matched screen or record a concrete blocker/rejection. Passing the short screen does not mean the score-10 objective has been achieved.",
+  "acceptance_criteria": [
+    "All completed screens are compared using their exact configurations and subset sizes.",
+    "Observation representation preserves every visible grid cell and coordinates, with round-trip and real-observation tests.",
+    "No game source, hidden labels, or hard-coded game mechanics enter the implementation.",
+    "Exact-code smoke validates serving, tool dispatch, real actions, persistence and teardown before a longer run.",
+    "Matched tests report per-game levels, RHAE, actions, calls, tokens and GPU seconds; no subset score is represented as a full benchmark or hidden score.",
+    "At most one bounded implementation repair and one candidate screen within the current GPU quota."
+  ],
+  "non_goals": ["Guaranteed score or rank", "Another broad prompt sweep", "Scored competition submission in this gate", "Training or inspecting environment_files"],
+  "authorized_scope": ["arc3/", "research/", "tests/", "private Kaggle development notebooks", "read-only official documentation and existing run artifacts"],
+  "known_future_gates": ["ACTIVATE", "PUBLISH", "OPERATE"],
+  "approval_boundaries": ["No scored submission before measured full-public score exceeds 10", "No paid GPU purchase or credential change", "Preserve user edits", "No long test without passing exact-code smoke"],
+  "source_revision": "0158256",
+  "execution_mode": "DEEP",
+  "work_packages": ["WP1-read-only-evidence-audit", "WP2-complete-observation-candidate", "WP3-local-verification", "WP4-short-GPU-lifecycle-and-screen"],
+  "created_at": "2026-09-17"
+}

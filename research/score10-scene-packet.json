@@ -1,0 +1,40 @@
+{
+  "acceptance_criteria": [
+    "Exact random-grid roundtrip and resize/diff tests; bounded text rendering; no guessed object semantics"
+  ],
+  "allowed_files": [],
+  "approval_gate": null,
+  "assigned_model": "gpt-5.6-terra",
+  "assigned_role": "implementer",
+  "business_context": null,
+  "context_budget_chars": 12000,
+  "created_at": "2026-09-17T13:46:03+00:00",
+  "critical_invariants": [
+    "Every visible cell and original coordinate must be recoverable"
+  ],
+  "dependencies": [],
+  "escalation_conditions": [],
+  "expected_evidence": [
+    "Changed files and test output"
+  ],
+  "non_goals": [
+    "No GPU, notebooks, game source, gameplay rules or model calls"
+  ],
+  "objective": "Implement lossless game-agnostic scene encoder and adversarial tests",
+  "parent_task_id": null,
+  "read_scope": [
+    "arc3/"
+  ],
+  "reasoning_effort": "medium",
+  "repair_attempt": 0,
+  "required_tests": [
+    "pytest tests/test_scene.py"
+  ],
+  "risk_class": "medium",
+  "source_revision": "0158256",
+  "task_id": "score10-scene",
+  "write_scope": [
+    "arc3/scene.py",
+    "tests/test_scene.py"
+  ]
+}

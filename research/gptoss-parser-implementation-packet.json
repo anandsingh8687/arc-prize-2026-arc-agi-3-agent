@@ -1,0 +1,20 @@
+{
+  "task_id": "gptoss-parser-implementation",
+  "objective": "Align GPT-OSS smoke and real agent with supported auto tool calling and preserve reasoning across readiness tool roundtrip; fail closed and persist HTTP error body.",
+  "source_revision": "680bca2",
+  "risk_class": "high",
+  "assigned_role": "implementer",
+  "assigned_model": "gpt-5.6-terra",
+  "reasoning_effort": "medium",
+  "read_scope": ["research/gptoss_runtime.py", "arc3/duck_gptoss_adapter.py", "tests/test_gptoss_runtime.py", "tests/test_duck_gptoss_adapter.py"],
+  "write_scope": ["research/gptoss_runtime.py", "arc3/duck_gptoss_adapter.py", "tests/test_gptoss_runtime.py", "tests/test_duck_gptoss_adapter.py"],
+  "allowed_files": ["research/gptoss_runtime.py", "arc3/duck_gptoss_adapter.py", "tests/test_gptoss_runtime.py", "tests/test_duck_gptoss_adapter.py"],
+  "non_goals": ["GPU launch", "Changing serving flags/model/teardown", "Relaxing Harmony parser", "Executing arbitrary output text"],
+  "critical_invariants": ["Explicit auto only; no required or named forced tools; ignore_eos false", "Keep reasoning and reasoning_content in tool roundtrip", "Exact call name/value and proper call id still required for readiness", "No automatic HTTP retry or malformed output recovery"],
+  "required_tests": ["Exact production and smoke payloads auto with EOS enabled", "Readiness history preserves reasoning", "No-tool/wrong tool/wrong value/id malformed responses reject", "HTTP 500 body retained without headers"],
+  "acceptance_criteria": ["All scoped tests pass; commit only owned files"],
+  "dependencies": ["CPU exact-error reproduction and primary vLLM recipe auto-only contract"],
+  "approval_gate": null,
+  "escalation_conditions": ["Broad server/parser patch appears necessary"],
+  "expected_evidence": ["Commit hash, tests, exact remaining uncertainty"]
+}
