@@ -80,3 +80,29 @@ Human: approve scored submit; publish OSS notebook by Milestone 2 if prize-eligi
 * Kaggle GPU: **0.74h remaining** / 30.00h (refreshAt **2026-09-19T00:00:00Z** = 05:30 IST).
 * Mini-wave notebook prepared at `notebooks/qwen-portfolio-miniwave/` but **not queued**
   (needs ≥~2–3h). See `notebooks/qwen-portfolio-miniwave/QUOTA_HOLD.md`.
+
+## GPU hygiene (always-on — save weekly hours)
+
+Kaggle charges **wall-clock while the session has GPU enabled**, including boot, installs, and idle. Our Sep 16–18 burn was mostly repeated smoke+screen pairs + OSS retries + Qwen smoke — not a leak.
+
+### Before every GPU kernel
+1. Confirm remaining hours (Kaggle → Settings → Accelerators / quota). Need ≥ planned wall + 20% margin.
+2. `TRUE_SUBMISSION=False` unless human OK that UTC day.
+3. `concurrency=1` for portfolio allocator evidence.
+4. Prefer **one** purposeful run over smoke+screen duplicates the same day.
+
+### Session rules
+- Do **not** leave interactive GPU notebooks idle; Save Version / Shut down when done.
+- Keep installs short; prefer cached datasets/models already on the kernel.
+- Cap smoke walls tightly (`ARC3_PORTFOLIO_SECONDS` matches intent: smoke ≤1200, mini-wave 3600–7200, full dress ≤ competition budget).
+- Abort/requeue rather than babysit a hung GPU session overnight.
+
+### Quota boost (legit, same account)
+- Link **Google Colab Pro** (+~15h/week) or **Pro+** (+~30h/week) via Kaggle notebook **File → Link to Colab** (does not spend Colab compute units). Verify extra hours appear under Settings before relying on them.
+- Teammate runs on **their** account + shared artifacts are fine; do not share logins.
+- **TPU is not a substitute** for Duck/Qwen/vLLM CUDA gameplay.
+
+### After each run
+- Download outputs immediately; shut down GPU session.
+- Log approx hours used in the gate verdict so the next run can budget.
+
