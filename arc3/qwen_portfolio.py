@@ -273,3 +273,172 @@ def dry_run_budget_api(
         bonus_seconds_on_level=30.0,
     )
     return result.plan, result.outcomes
+
+
+@dataclass
+class SequentialApplyRecord:
+    """One apply → play → session-end notify cycle."""
+
+    game_id: str
+    applied_seconds: float
+    wall_seconds: float
+    levels_completed: int
+    actions: int
+    abandon_reason: str
+    allocated_after: float
+    remaining_after: float
+    reserve_after: float
+
+
+def live_reallocate_if_level_up(
+    plan: PortfolioPlan,
+    solver: Any,
+    *,
+    game_id: str,
+    levels_completed: int,
+    bonus_seconds: float | None = None,
+) -> float:
+    """Mid-session: move reserve onto a newly cleared level and bump Duck wall.
+
+    Does **not** mark spend — call :func:`notify_level_and_spend` at session end.
+    Returns the solver ``max_runtime_s_per_game`` after the bump, or ``0.0`` if
+    no new levels were observed.
+    """
+    game = next((g for g in plan.games if g.game_id == game_id), None)
+    if game is None:
+        return 0.0
+    prev_levels = int(game.levels_completed)
+    if levels_completed <= prev_levels:
+        return 0.0
+    per = (
+        bonus_seconds
+        if bonus_seconds is not None
+        else resolve_float_env(ENV_BONUS_ON_LEVEL, 120.0)
+    )
+    reallocate_on_level(
+        plan,
+        game_id,
+        bonus_seconds=per * max(1, levels_completed - prev_levels),
+    )
+    game.levels_completed = max(game.levels_completed, levels_completed)
+    return apply_budget_to_solver(solver, game)
+
+
+def notify_session_end(
+    plan: PortfolioPlan,
+    *,
+    game_id: str,
+    wall_seconds: float,
+    levels_completed: int,
+    actions: int,
+    bonus_seconds: float | None = None,
+    already_live_reallocated: bool = False,
+) -> str:
+    """Session-end portfolio update (alias with explicit live-path semantics).
+
+    If mid-session :func:`live_reallocate_if_level_up` already moved reserve for
+    these levels, pass ``already_live_reallocated=True`` so we only mark spend /
+    abandon (levels on the plan already reflect the bonus).
+    """
+    if already_live_reallocated:
+        game = next((g for g in plan.games if g.game_id == game_id), None)
+        allocated = game.allocated_seconds if game else wall_seconds
+        reason = should_abandon(
+            spent_seconds=wall_seconds,
+            allocated_seconds=allocated,
+            levels_completed=levels_completed,
+            actions=actions,
+            no_level_progress_seconds=wall_seconds,
+        )
+        mark_spent(
+            plan,
+            game_id,
+            spent_seconds=wall_seconds,
+            levels_completed=levels_completed,
+            abandon_reason=reason,
+        )
+        return reason
+    return notify_level_and_spend(
+        plan,
+        game_id=game_id,
+        wall_seconds=wall_seconds,
+        levels_completed=levels_completed,
+        actions=actions,
+        bonus_seconds=bonus_seconds,
+    )
+
+
+def drive_sequential_portfolio(
+    solver: Any,
+    plan: PortfolioPlan,
+    play_session: Any,
+    *,
+    game_ids: list[str] | None = None,
+    bonus_seconds: float | None = None,
+    max_visits: int | None = None,
+) -> list[SequentialApplyRecord]:
+    """Apply → play → session-end notify, repeating via ``plan.next_game()``.
+
+    Notify runs **before** the next ``apply_plan_game_to_solver``, so a
+    level-triggered reserve move changes the subsequent allocation (typically
+    a revisit with leftover exploit budget).
+
+    ``play_session(game_id, applied_seconds) -> Mapping`` must return keys
+    ``levels_completed``, ``actions`` / ``actions_taken``, and
+    ``wall_seconds`` / ``active_wall_seconds``.
+    """
+    records: list[SequentialApplyRecord] = []
+    visits = 0
+    fixed = list(game_ids) if game_ids is not None else None
+    fixed_idx = 0
+
+    while True:
+        if max_visits is not None and visits >= max_visits:
+            break
+        if fixed is not None:
+            if fixed_idx >= len(fixed):
+                break
+            game_id = fixed[fixed_idx]
+            fixed_idx += 1
+            game = next((g for g in plan.games if g.game_id == game_id), None)
+            if game is None or game.exhausted:
+                continue
+        else:
+            game = plan.next_game()
+            if game is None:
+                break
+            game_id = game.game_id
+
+        applied = apply_plan_game_to_solver(solver, plan, game_id)
+        row = dict(play_session(game_id, applied) or {})
+        levels = int(row.get("levels_completed") or 0)
+        actions = int(row.get("actions_taken") or row.get("actions") or 0)
+        wall = float(
+            row.get("active_wall_seconds")
+            or row.get("wall_seconds")
+            or applied
+        )
+        reason = notify_level_and_spend(
+            plan,
+            game_id=game_id,
+            wall_seconds=wall,
+            levels_completed=levels,
+            actions=actions,
+            bonus_seconds=bonus_seconds,
+        )
+        game_after = next(g for g in plan.games if g.game_id == game_id)
+        records.append(
+            SequentialApplyRecord(
+                game_id=game_id,
+                applied_seconds=applied,
+                wall_seconds=wall,
+                levels_completed=levels,
+                actions=actions,
+                abandon_reason=reason,
+                allocated_after=game_after.allocated_seconds,
+                remaining_after=game_after.remaining_seconds,
+                reserve_after=plan.reserve_seconds,
+            )
+        )
+        visits += 1
+    return records

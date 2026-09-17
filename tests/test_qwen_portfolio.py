@@ -102,3 +102,122 @@ def test_dry_run_budget_api_drives_solver() -> None:
     assert all(o.meta.get("solver_budget", 0) > 0 for o in outcomes)
     hot = next(g for g in plan.games if g.game_id == "g0")
     assert hot.levels_completed >= 1
+
+
+def test_live_reallocate_bumps_solver_mid_session() -> None:
+    class Solver:
+        max_runtime_s_per_game = 0.0
+
+    from arc3.qwen_portfolio import live_reallocate_if_level_up
+
+    solver = Solver()
+    plan = plan_for_qwen(
+        ["hot", "cold"],
+        total_seconds=1000,
+        min_seconds_per_game=50,
+        reserve_fraction=0.2,
+    )
+    # Initial explore apply.
+    first = apply_budget_to_solver(
+        solver,
+        next(g for g in plan.games if g.game_id == "hot"),
+    )
+    assert first > 0
+    reserve_before = plan.reserve_seconds
+    bumped = live_reallocate_if_level_up(
+        plan,
+        solver,
+        game_id="hot",
+        levels_completed=1,
+        bonus_seconds=50,
+    )
+    assert bumped > first
+    assert solver.max_runtime_s_per_game == bumped
+    assert plan.reserve_seconds == reserve_before - 50
+    # Idempotent for same level count.
+    assert (
+        live_reallocate_if_level_up(
+            plan, solver, game_id="hot", levels_completed=1, bonus_seconds=50
+        )
+        == 0.0
+    )
+
+
+def test_notify_before_next_apply_changes_subsequent_allocation() -> None:
+    """Level complete + partial spend → next apply (revisit) sees exploit leftover."""
+    from arc3.qwen_portfolio import drive_sequential_portfolio
+
+    class Solver:
+        max_runtime_s_per_game = 0.0
+
+    solver = Solver()
+    plan = plan_for_qwen(
+        ["hot", "cold"],
+        total_seconds=500,
+        min_seconds_per_game=40,
+        reserve_fraction=0.2,
+    )
+    # pool=400, per=200 explore each, reserve=100
+    hot0 = next(g for g in plan.games if g.game_id == "hot")
+    explore_slice = hot0.allocated_seconds
+    assert explore_slice == 200.0
+
+    visits: list[tuple[str, float]] = []
+
+    def play_session(game_id: str, applied: float):
+        visits.append((game_id, applied))
+        if game_id == "hot" and sum(1 for g, _ in visits if g == "hot") == 1:
+            # Clear a level after burning only part of the slice; bonus extends revisit.
+            return {
+                "levels_completed": 1,
+                "actions_taken": 20,
+                "active_wall_seconds": 60.0,
+            }
+        # Exhaust whatever remains on later visits / cold.
+        return {
+            "levels_completed": 1 if game_id == "hot" else 0,
+            "actions_taken": 25,
+            "active_wall_seconds": applied,
+        }
+
+    records = drive_sequential_portfolio(
+        solver,
+        plan,
+        play_session,
+        bonus_seconds=80.0,
+        max_visits=4,
+    )
+    assert visits[0] == ("hot", explore_slice)
+    # After notify: allocated=200+80=280, spent=60 → remaining=220 for revisit.
+    assert len(visits) >= 2
+    assert visits[1][0] == "hot"
+    assert abs(visits[1][1] - 220.0) < 1e-6
+    assert records[0].allocated_after == 280.0
+    assert records[0].remaining_after == 220.0
+    # Contrast: without session-end notify before next apply, revisit would still
+    # see the pre-bonus remaining (200-60=140). Prove the delta.
+    assert visits[1][1] > (explore_slice - 60.0) + 1e-6
+
+
+def test_notify_session_end_skips_double_bonus_after_live() -> None:
+    from arc3.qwen_portfolio import live_reallocate_if_level_up, notify_session_end
+
+    class Solver:
+        max_runtime_s_per_game = 0.0
+
+    solver = Solver()
+    plan = plan_for_qwen(["a", "b"], total_seconds=1000, min_seconds_per_game=50)
+    live_reallocate_if_level_up(
+        plan, solver, game_id="a", levels_completed=1, bonus_seconds=40
+    )
+    reserve_after_live = plan.reserve_seconds
+    reason = notify_session_end(
+        plan,
+        game_id="a",
+        wall_seconds=30,
+        levels_completed=1,
+        actions=12,
+        already_live_reallocated=True,
+    )
+    assert plan.reserve_seconds == reserve_after_live
+    assert reason == ""

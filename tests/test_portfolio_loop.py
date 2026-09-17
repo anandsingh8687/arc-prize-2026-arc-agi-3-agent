@@ -63,3 +63,44 @@ def test_portfolio_loop_reallocates_on_level(tmp_path: Path) -> None:
     hot = next(g for g in result.plan.games if g.game_id == "hot")
     assert hot.phase.value == "exploit"
     assert hot.levels_completed >= 1
+
+
+def test_portfolio_loop_notify_before_next_apply_changes_budget() -> None:
+    """Level + partial spend must change the next play_fn max_seconds (revisit)."""
+    applies: list[tuple[str, float]] = []
+
+    def play_fn(game_id: str, max_seconds: float) -> PlayOutcome:
+        applies.append((game_id, max_seconds))
+        if game_id == "hot" and sum(1 for g, _ in applies if g == "hot") == 1:
+            return PlayOutcome(
+                game_id=game_id,
+                wall_seconds=50.0,
+                actions=12,
+                levels_completed=1,
+                level_indices_completed=[1],
+            )
+        return PlayOutcome(
+            game_id=game_id,
+            wall_seconds=max_seconds,
+            actions=20,
+            levels_completed=1 if game_id == "hot" else 0,
+            level_indices_completed=[1] if game_id == "hot" else [],
+        )
+
+    result = run_portfolio(
+        ["hot", "cold"],
+        play_fn,
+        total_seconds=500,
+        min_seconds_per_game=40.0,
+        reserve_fraction=0.2,
+        bonus_seconds_on_level=80.0,
+    )
+    assert applies[0][0] == "hot"
+    explore = applies[0][1]
+    assert abs(explore - 200.0) < 1e-6
+    # After notify: allocated 280, spent 50 → next hot apply 230.
+    hot_applies = [sec for gid, sec in applies if gid == "hot"]
+    assert len(hot_applies) >= 2
+    assert abs(hot_applies[1] - 230.0) < 1e-6
+    hot = next(g for g in result.plan.games if g.game_id == "hot")
+    assert hot.phase.value == "exploit"

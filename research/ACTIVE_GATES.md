@@ -37,11 +37,27 @@ A run without coverage accounting cannot be used to argue for a scored submit.
 
 * **T1 GPT-OSS: FAIL v6** — Harmony/tool-call path still produced 0 gameplay actions
   after ≥300s analyzer timeout. OSS path shelved.
-* **Next gate: Qwen local portfolio coverage** (non-scored).
+* **Qwen portfolio smoke v1: PASS** — 354 actions, 1 level, abandon+reallocate recorded
+  (`kaggle-outputs/qwen-portfolio-smoke-v1/`). Post-hoc notify caveat fixed in code:
+  session-end notify + mid-session level-up bump before next apply.
+* **Next gate: Qwen mini-wave** (non-scored, 5–8 games, `ARC3_PORTFOLIO_SECONDS≈3600–7200`).
   - Local (no GPU): `python scripts/qwen_portfolio_coverage_gate.py`
+  - Downloaded artifact assert:
+    `python scripts/qwen_portfolio_coverage_gate.py --artifacts /path/to/kaggle-outputs/...`
   - Tests: `pytest tests/test_portfolio_loop.py tests/test_qwen_portfolio.py -q`
-  - Next GPU: non-scored Qwen Gate-1/smoke with `ARC3_TRACE` + `ARC3_PORTFOLIO_SECONDS`;
-    do **not** create a scored Kaggle submission.
+  - Keep `TRUE_SUBMISSION=False`; never scored submit without human OK.
+
+## Concurrency policy (portfolio)
+
+* **`concurrency=1` is required for true portfolio sequential runs.**
+  With `concurrency>1`, multiple games receive `PORTFOLIO_APPLY` before any
+  session-end `notify`, so exploit/abandon reallocations cannot change the next
+  game's live `max_runtime_s_per_game`.
+* Small parallel waves (throughput screens) may use higher concurrency, but must
+  **not** be treated as evidence for T3 portfolio allocator quality.
+* Duck session hook contract: **apply → play → session-end notify → next apply**;
+  mid-session `live_reallocate_if_level_up` may bump the *current* game's wall when
+  a level clears before session end.
 
 Expect-queue helpers remain available for non-Duck local agents; they are **not**
 wired into the Qwen XML/tool loop (would break Duck tool plans).
@@ -58,3 +74,9 @@ wired into the Qwen XML/tool loop (would break Duck tool plans).
 
 Bot: implement + unit test + non-scored kernel when needed.
 Human: approve scored submit; publish OSS notebook by Milestone 2 if prize-eligible.
+
+## GPU quota note (2026-09-18 ~02:47 IST)
+
+* Kaggle GPU: **0.74h remaining** / 30.00h (refreshAt **2026-09-19T00:00:00Z** = 05:30 IST).
+* Mini-wave notebook prepared at `notebooks/qwen-portfolio-miniwave/` but **not queued**
+  (needs ≥~2–3h). See `notebooks/qwen-portfolio-miniwave/QUOTA_HOLD.md`.
