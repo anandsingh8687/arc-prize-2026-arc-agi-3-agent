@@ -16,6 +16,7 @@ from arcengine import GameAction, GameState
 
 from .agents.base import Agent, Observation
 from .env import HIDDEN_GAMES, RUNTIME_SECONDS, baselines_by_game, grid_of, make_arcade
+from .instrumentation import GameTrace, TraceRecorder
 from .scoring import GameResult, RunResult, levels_from_action_log
 
 # Aggregate action rate needed for depth 3 across the hidden set.
@@ -102,28 +103,57 @@ def play_game(
     )
 
 
+def _record_game_trace(
+    recorder: TraceRecorder | None, result: GameResult, abandon_reason: str = ""
+) -> None:
+    if recorder is None:
+        return
+    completed = [lv.index for lv in result.levels if lv.completed]
+    recorder.record(
+        GameTrace(
+            game_id=result.game_id,
+            wall_seconds=result.wall_seconds,
+            actions=result.actions,
+            levels_completed=result.levels_completed,
+            level_indices_completed=completed,
+            abandon_reason=abandon_reason,
+            score=result.score,
+        )
+    )
+
+
 def evaluate(
     agent: Agent,
     games: list[str] | None = None,
     max_actions: int = 400,
     scored_environments: int | None = None,
+    trace_path: str | None = None,
 ) -> RunResult:
     arcade = make_arcade()
     baselines = baselines_by_game(arcade)
     targets = games or sorted(baselines)
 
     run = RunResult(scored_environments=scored_environments or len(targets))
+    recorder = TraceRecorder(trace_path) if trace_path else None
     for game_id in targets:
         if game_id not in baselines:
             print(f"  skip {game_id}: no baseline data")
             continue
         result = play_game(arcade, game_id, agent, baselines[game_id], max_actions)
+        _record_game_trace(recorder, result)
         run.games.append(result)
         rate = result.actions / result.wall_seconds if result.wall_seconds else 0.0
         print(
             f"  {game_id:<6} score {result.score:>6.2f} / ceiling {result.ceiling:>6.2f}"
             f"  depth {result.levels_completed}/{result.total_levels}"
             f"  actions {result.actions:>4}  {rate:>7.1f} act/s"
+        )
+    if recorder is not None:
+        summary = recorder.write_summary(run.scored_environments)
+        print(
+            f"  trace coverage: touched {summary['games_touched']}"
+            f" / scored {summary['scored_environments']}"
+            f"  levels {summary['total_levels_completed']}"
         )
     return run
 
@@ -169,12 +199,23 @@ def main() -> None:
         default=None,
         help=f"divisor for the total; use {HIDDEN_GAMES} to project the hidden set",
     )
+    parser.add_argument(
+        "--trace",
+        default="",
+        help="write per-game coverage JSONL to this path",
+    )
     args = parser.parse_args()
 
     games = [g.strip() for g in args.games.split(",") if g.strip()] or None
     agent = build_agent(args.agent)
     print(f"agent: {agent.name}")
-    run = evaluate(agent, games, args.max_actions, args.scored_environments)
+    run = evaluate(
+        agent,
+        games,
+        args.max_actions,
+        args.scored_environments,
+        trace_path=args.trace or None,
+    )
     report(run)
 
 
