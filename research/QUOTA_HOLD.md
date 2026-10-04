@@ -29,7 +29,11 @@ The push used **`-t 1200`**, which Kaggle applies as the papermill **per-cell** 
 
 ### Requeue / quota
 
-At doc time, `kaggle quota` showed GPU **20.43h remaining** / 30.00h (`refreshAt 2026-10-10T00:00:00Z`). Requeue of non-scored mini-wave is authorized when this fix is pushed (intermediate steps pre-approved; **no scored submit**).
+At fix time, `kaggle quota` showed GPU **20.43h remaining** / 30.00h (`refreshAt 2026-10-10T00:00:00Z`).
+
+**Requeued (non-scored):** `anandsingh8687/arc3-qwen-portfolio-miniwave-20261004` via
+`kaggle kernels push -p notebooks/qwen-portfolio-miniwave -t 10800 --accelerator NvidiaRtxPro6000`.
+Initial status: `KernelWorkerStatus.QUEUED` (version 1). **No scored submit.**
 
 ### Next step after a successful mini-wave
 

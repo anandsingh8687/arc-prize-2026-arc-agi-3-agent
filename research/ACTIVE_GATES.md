@@ -90,8 +90,8 @@ Human: approve scored submit; publish OSS notebook by Milestone 2 if prize-eligi
 * Kaggle GPU (CLI `kaggle quota`): **20.43h remaining** / 30.00h
   (refreshAt **2026-10-10T00:00:00Z** = 05:30 IST). Enough for mini-wave retry.
 * Mini-wave 20260918 cancelled on cell timeout; fix is `-t 10800` + slug
-  `...-20261004`. See `research/QUOTA_HOLD.md` and
-  `notebooks/qwen-portfolio-miniwave/QUOTA_HOLD.md`.
+  `...-20261004`. **Requeued** `arc3-qwen-portfolio-miniwave-20261004` (QUEUED v1).
+  See `research/QUOTA_HOLD.md` and `notebooks/qwen-portfolio-miniwave/QUOTA_HOLD.md`.
 * Earlier note (2026-09-18): was 0.74h remaining before 2026-09-19 refresh;
   Sep 19 auto-queue routine failed, but a miniwave kernel did run ~2026-10-04 morning.
 
