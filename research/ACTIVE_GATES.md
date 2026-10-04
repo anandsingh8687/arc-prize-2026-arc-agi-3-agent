@@ -33,7 +33,7 @@ A run without coverage accounting cannot be used to argue for a scored submit.
 | Promote | Full-25 local | Levels ≫ prior best (31/183 on scored twin) **and** T0 live | Keep iterating |
 | Scored | Public LB | Human OK that day; 1/day budget | — |
 
-## Current status (2026-10-04 evening IST)
+## Current status (2026-10-05 ~00:55 IST)
 
 * **T1 GPT-OSS: FAIL v6** — Harmony/tool-call path still produced 0 gameplay actions
   after ≥300s analyzer timeout. OSS path shelved.
@@ -50,24 +50,23 @@ A run without coverage accounting cannot be used to argue for a scored submit.
   - Live reallocate on level-up (lf52/cn04/bp35→948s, wa30→900s); lp85 cleared **4**
     levels; abandon `time_budget_exhausted` on tn36/wa30/lp85
   - Log: `PORTFOLIO_MINIWAVE_OK` / `GATE1_SMOKE_OK`; non-scored only
-* **Full 25-game non-scored dress rehearsal: PUSHED / QUEUED (2026-10-04 ~18:00 IST)**
+* **Full 25-game non-scored dress rehearsal: FAIL / CANCEL_ACKNOWLEDGED (2026-10-05 ~00:55 IST)**
   - Kernel `anandsingh8687/arc3-qwen-portfolio-dress-20261004`
-    (https://www.kaggle.com/code/anandsingh8687/arc3-qwen-portfolio-dress-20261004),
-    notebook `notebooks/qwen-portfolio-dress-rehearsal/`, pushed with
-    `-t 30000 --accelerator NvidiaRtxPro6000`.
-  - Config: 25 public games, `concurrency=1`, `TRUE_SUBMISSION=False` (hard-raises if true),
-    `ARC3_PORTFOLIO_SECONDS=22500` (~828s applied/game after 8% reserve, same slice as the
-    passing mini-wave), `GATE1_SMOKE_GAME_SECONDS=900`, hard notebook guard 28800s
-    (8h, includes cold load), soft stop hard-180s.
-  - Lessons applied: cold vLLM load was ~1320s (22 min) in mini-wave and counts toward the
-    guard; per-cell timeout must exceed the long gameplay cell (10800 would kill it at 3h)
-    so `-t 30000`; tn36 (zero-level, ~917s burned) is budgeted as a full slice
-    (~15 min of ~6.3h gameplay), not special-cased, so first 6 games compare 1:1 with mini-wave.
-  - Estimate: ~22.6k s gameplay + ~1.4k s load/teardown ≈ **6.7h GPU expected**, **8.0-8.3h
-    worst case** (hard guard). Quota 18.56h → ~11.9h spare expected, ≥10.3h spare worst case.
-  - Pass = `PORTFOLIO_DRESS_OK`, 25 coverage rows, clean teardown. Scored submit still
-    needs **same-day Anand approval**; no scored submit from this kernel.
-  - Local coverage check: `python scripts/qwen_portfolio_coverage_gate.py`
+    (https://www.kaggle.com/code/anandsingh8687/arc3-qwen-portfolio-dress-20261004)
+    pushed with `-t 30000 --accelerator NvidiaRtxPro6000`; notebook
+    `notebooks/qwen-portfolio-dress-rehearsal/`.
+  - **External cancel** mid-game 12 (`ar25`) after ~3.2h GPU / ~11425s notebook wall.
+    Log has **no** `CellTimeoutError` (unlike mini-wave 20260918). Soft/hard deadlines
+    were still ~4.4h away. No `PORTFOLIO_DRESS_OK`; coverage artifacts not flushed.
+  - Partial (not a pass): **11** finished games, **20** levels, last framework mean
+    print **3.86** / 25 slots; ~2330 actions. First-6 vs mini-wave: tn36 0→1, lp85 4→5
+    (score 13.83→28.68); cn04 score regress. Artifacts + `GATE_VERDICT.md` in
+    `kaggle-outputs/arc3-qwen-portfolio-dress-20261004/`.
+  - Config reminder: 25 games, `concurrency=1`, `TRUE_SUBMISSION=False`,
+    `ARC3_PORTFOLIO_SECONDS=22500` (~828s/game), hard guard 28800s.
+  - **No auto GPU requeue** — standing order 2026-10-04 forbids Kaggle GPU until Anand
+    explicitly allows. Cheap requeue (same `-t 30000`) only after that OK. Scored submit
+    still needs **same-day Anand approval** after a real `PORTFOLIO_DRESS_OK`.
 
 ## Concurrency policy (portfolio)
 
@@ -97,13 +96,15 @@ wired into the Qwen XML/tool loop (would break Duck tool plans).
 Bot: implement + unit test + non-scored kernel when needed.
 Human: approve scored submit; publish OSS notebook by Milestone 2 if prize-eligible.
 
-## GPU quota note (2026-10-04 ~17:35 IST)
+## GPU quota note (2026-10-05 ~00:55 IST)
 
-* Kaggle GPU (CLI `kaggle quota`): **18.56h remaining** / 30.00h
-  (refreshAt **2026-10-10T00:00:00Z** = 05:30 IST). Mini-wave 20261004 used ~1.9h.
-* Mini-wave 20261004 **COMPLETE / PASS**. Next burn: 25-game non-scored dress
-  rehearsal (plan wall carefully; leave margin for cold load).
-* See `research/QUOTA_HOLD.md` and `notebooks/qwen-portfolio-miniwave/QUOTA_HOLD.md`.
+* Kaggle GPU (CLI `kaggle quota`): **15.37h remaining** / 30.00h
+  (refreshAt **2026-10-10T00:00:00Z** = 05:30 IST). Dress cancel burned ~3.19h on top of
+  mini-wave (~1.9h).
+* Dress 20261004 **FAIL / CANCEL_ACKNOWLEDGED** (incomplete). Standing GPU hold remains
+  until Anand lifts it; do not requeue.
+* See `research/QUOTA_HOLD.md`, dress `GATE_VERDICT.md`, and
+  `notebooks/qwen-portfolio-miniwave/QUOTA_HOLD.md`.
 
 ## GPU hygiene (always-on — save weekly hours)
 

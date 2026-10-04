@@ -58,3 +58,24 @@ Initial status: `KernelWorkerStatus.QUEUED` (version 1). **No scored submit.**
 1. Full **25-game non-scored** dress rehearsal.
 2. Scored public submit only with **same-day Anand approval**.
 
+## 2026-10-05 — dress rehearsal CANCEL_ACKNOWLEDGED (external)
+
+| Field | Value |
+|---|---|
+| Kernel | `anandsingh8687/arc3-qwen-portfolio-dress-20261004` |
+| Status | `KernelWorkerStatus.CANCEL_ACKNOWLEDGED` |
+| Logs / verdict | `/workspace/arc3/kaggle-outputs/arc3-qwen-portfolio-dress-20261004/` (+ `GATE_VERDICT.md`) |
+| Wall / GPU | ~11425s notebook (~3.2h); quota 18.56h → **15.37h** remaining |
+| Gameplay | Partial: 11 finished games, 20 levels; cancelled mid `ar25` |
+| vs CellTimeout mini-wave cancel | **Different** — no `CellTimeoutError` in log; soft/hard still ~4.4h away |
+
+### Root cause
+
+External cancel (worker `CANCEL_ACKNOWLEDGED`) with no papermill timeout / soft-stop /
+traceback in the captured log. Not a code or `-t` bug for this failure mode.
+
+### Fix / requeue
+
+- **No automatic requeue.** Standing order 2026-10-04: no Kaggle GPU until Anand says so.
+- When allowed: same notebook, `-t 30000 --accelerator NvidiaRtxPro6000` (optional new slug).
+- Scored submit still requires same-day Anand OK after a full `PORTFOLIO_DRESS_OK`.
