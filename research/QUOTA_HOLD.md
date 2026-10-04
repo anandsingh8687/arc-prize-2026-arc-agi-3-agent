@@ -39,3 +39,22 @@ Initial status: `KernelWorkerStatus.QUEUED` (version 1). **No scored submit.**
 
 1. Full **25-game non-scored** dress rehearsal.
 2. Scored public submit only with **same-day Anand approval**.
+
+## 2026-10-04 — mini-wave 20261004 COMPLETE / PASS
+
+| Field | Value |
+|---|---|
+| Kernel | `anandsingh8687/arc3-qwen-portfolio-miniwave-20261004` |
+| Status | `KernelWorkerStatus.COMPLETE` |
+| Logs / artifacts | `/workspace/arc3/kaggle-outputs/arc3-qwen-portfolio-miniwave-20261004/` |
+| Verdict | **PASS** — see `GATE_VERDICT.md` in that folder |
+| Framework score | **3.84** (6 games) vs smoke 0.91 (2 games) / prior public ~**2.37** |
+| Levels / actions | **8** levels, **1227** actions; 6 touched, 1 zero-level (tn36) |
+| Portfolio | live reallocate on level-up; abandon on time_budget for tn36/wa30/lp85 |
+| GPU after | **18.56h** remaining / 30h (`refreshAt` 2026-10-10T00:00:00Z) |
+
+### Next step
+
+1. Full **25-game non-scored** dress rehearsal.
+2. Scored public submit only with **same-day Anand approval**.
+

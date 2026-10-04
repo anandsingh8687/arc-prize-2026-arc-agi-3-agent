@@ -7,6 +7,18 @@ Prepared from `qwen-portfolio-smoke` with:
 - `concurrency=1`
 - `TRUE_SUBMISSION=False`
 
+## Status (2026-10-04 evening IST) — PASS
+
+**Kernel `anandsingh8687/arc3-qwen-portfolio-miniwave-20261004` → `COMPLETE` / `PORTFOLIO_MINIWAVE_OK`.**
+
+- Artifacts: `/workspace/arc3/kaggle-outputs/arc3-qwen-portfolio-miniwave-20261004/` (+ `GATE_VERDICT.md`).
+- Framework score **3.84** on 6 games; **8** levels / **1227** actions; 1 zero-level (tn36).
+- Live abandon/reallocate observed; `-t 10800` fix confirmed (cold load + 5400s portfolio finished).
+- GPU after: **18.56h**/30h remaining.
+- **Next:** 25-game non-scored dress rehearsal. Scored submit still needs same-day Anand approval.
+
+## Prior status (2026-10-04 morning IST) — CANCEL_ACKNOWLEDGED (superseded)
+
 ## Status (2026-10-04 IST)
 
 **Kernel `anandsingh8687/arc3-qwen-portfolio-miniwave-20260918` → `CANCEL_ACKNOWLEDGED`.**
