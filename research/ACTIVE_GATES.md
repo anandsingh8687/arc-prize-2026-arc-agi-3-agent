@@ -50,11 +50,24 @@ A run without coverage accounting cannot be used to argue for a scored submit.
   - Live reallocate on level-up (lf52/cn04/bp35→948s, wa30→900s); lp85 cleared **4**
     levels; abandon `time_budget_exhausted` on tn36/wa30/lp85
   - Log: `PORTFOLIO_MINIWAVE_OK` / `GATE1_SMOKE_OK`; non-scored only
-* **Next gate: full 25-game non-scored dress rehearsal**
-  - Keep `TRUE_SUBMISSION=False`; concurrency=1; budget against **18.56h** GPU left
-    (`refreshAt` 2026-10-10T00:00:00Z).
+* **Full 25-game non-scored dress rehearsal: PUSHED / QUEUED (2026-10-04 ~18:00 IST)**
+  - Kernel `anandsingh8687/arc3-qwen-portfolio-dress-20261004`
+    (https://www.kaggle.com/code/anandsingh8687/arc3-qwen-portfolio-dress-20261004),
+    notebook `notebooks/qwen-portfolio-dress-rehearsal/`, pushed with
+    `-t 30000 --accelerator NvidiaRtxPro6000`.
+  - Config: 25 public games, `concurrency=1`, `TRUE_SUBMISSION=False` (hard-raises if true),
+    `ARC3_PORTFOLIO_SECONDS=22500` (~828s applied/game after 8% reserve, same slice as the
+    passing mini-wave), `GATE1_SMOKE_GAME_SECONDS=900`, hard notebook guard 28800s
+    (8h, includes cold load), soft stop hard-180s.
+  - Lessons applied: cold vLLM load was ~1320s (22 min) in mini-wave and counts toward the
+    guard; per-cell timeout must exceed the long gameplay cell (10800 would kill it at 3h)
+    so `-t 30000`; tn36 (zero-level, ~917s burned) is budgeted as a full slice
+    (~15 min of ~6.3h gameplay), not special-cased, so first 6 games compare 1:1 with mini-wave.
+  - Estimate: ~22.6k s gameplay + ~1.4k s load/teardown ≈ **6.7h GPU expected**, **8.0-8.3h
+    worst case** (hard guard). Quota 18.56h → ~11.9h spare expected, ≥10.3h spare worst case.
+  - Pass = `PORTFOLIO_DRESS_OK`, 25 coverage rows, clean teardown. Scored submit still
+    needs **same-day Anand approval**; no scored submit from this kernel.
   - Local coverage check: `python scripts/qwen_portfolio_coverage_gate.py`
-  - Scored submit still needs **same-day Anand approval**.
 
 ## Concurrency policy (portfolio)
 
@@ -117,3 +130,7 @@ Kaggle charges **wall-clock while the session has GPU enabled**, including boot,
 - Download outputs immediately; shut down GPU session.
 - Log approx hours used in the gate verdict so the next run can budget.
 
+
+## Dress rehearsal quota note (2026-10-04 ~18:00 IST)
+
+* Before push: 18.56h GPU remaining. Dress kernel expected ~6.7h (max ~8.3h). Download outputs and log actual hours in a GATE_VERDICT.md after completion.
