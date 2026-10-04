@@ -33,19 +33,29 @@ A run without coverage accounting cannot be used to argue for a scored submit.
 | Promote | Full-25 local | Levels ≫ prior best (31/183 on scored twin) **and** T0 live | Keep iterating |
 | Scored | Public LB | Human OK that day; 1/day budget | — |
 
-## Current status (2026-09-18 IST)
+## Current status (2026-10-04 IST)
 
 * **T1 GPT-OSS: FAIL v6** — Harmony/tool-call path still produced 0 gameplay actions
   after ≥300s analyzer timeout. OSS path shelved.
 * **Qwen portfolio smoke v1: PASS** — 354 actions, 1 level, abandon+reallocate recorded
   (`kaggle-outputs/qwen-portfolio-smoke-v1/`). Post-hoc notify caveat fixed in code:
   session-end notify + mid-session level-up bump before next apply.
-* **Next gate: Qwen mini-wave** (non-scored, 5–8 games, `ARC3_PORTFOLIO_SECONDS≈3600–7200`).
+* **Qwen mini-wave 20260918: FAIL / CANCEL_ACKNOWLEDGED** — kernel
+  `anandsingh8687/arc3-qwen-portfolio-miniwave-20260918` died with papermill
+  `CellTimeoutError` after **1200s** during vLLM Qwen3.8-Flash-Next cold load
+  (PLE-offload ~205/206). Logs: `kaggle-outputs/miniwave-20260918/` (vLLM
+  `10-04` ~03:56–04:13Z). **No gameplay, no levels/coverage; not comparable to
+  2.37 baseline.** Root cause: push used smoke-sized `-t 1200` per-cell timeout.
+  Fix: push with **`-t 10800`**; new slug `arc3-qwen-portfolio-miniwave-20261004`.
+  Details: `research/QUOTA_HOLD.md`, `notebooks/qwen-portfolio-miniwave/QUOTA_HOLD.md`.
+* **Next gate: Qwen mini-wave retry** (non-scored, 6 games, `ARC3_PORTFOLIO_SECONDS=5400`).
   - Local (no GPU): `python scripts/qwen_portfolio_coverage_gate.py`
   - Downloaded artifact assert:
     `python scripts/qwen_portfolio_coverage_gate.py --artifacts /path/to/kaggle-outputs/...`
   - Tests: `pytest tests/test_portfolio_loop.py tests/test_qwen_portfolio.py -q`
   - Keep `TRUE_SUBMISSION=False`; never scored submit without human OK.
+  - After a **successful** mini-wave → full 25-game non-scored dress rehearsal;
+    scored submit still needs **same-day Anand approval**.
 
 ## Concurrency policy (portfolio)
 
@@ -75,11 +85,15 @@ wired into the Qwen XML/tool loop (would break Duck tool plans).
 Bot: implement + unit test + non-scored kernel when needed.
 Human: approve scored submit; publish OSS notebook by Milestone 2 if prize-eligible.
 
-## GPU quota note (2026-09-18 ~02:47 IST)
+## GPU quota note (2026-10-04 ~11:15 IST)
 
-* Kaggle GPU: **0.74h remaining** / 30.00h (refreshAt **2026-09-19T00:00:00Z** = 05:30 IST).
-* Mini-wave notebook prepared at `notebooks/qwen-portfolio-miniwave/` but **not queued**
-  (needs ≥~2–3h). See `notebooks/qwen-portfolio-miniwave/QUOTA_HOLD.md`.
+* Kaggle GPU (CLI `kaggle quota`): **20.43h remaining** / 30.00h
+  (refreshAt **2026-10-10T00:00:00Z** = 05:30 IST). Enough for mini-wave retry.
+* Mini-wave 20260918 cancelled on cell timeout; fix is `-t 10800` + slug
+  `...-20261004`. See `research/QUOTA_HOLD.md` and
+  `notebooks/qwen-portfolio-miniwave/QUOTA_HOLD.md`.
+* Earlier note (2026-09-18): was 0.74h remaining before 2026-09-19 refresh;
+  Sep 19 auto-queue routine failed, but a miniwave kernel did run ~2026-10-04 morning.
 
 ## GPU hygiene (always-on — save weekly hours)
 
